@@ -179,7 +179,7 @@ class iimSlide:
 
         if len(self.messageQueue) > 0:
             Connection.Send(self.messageQueue)
-            self.messageQueu = {}
+            self.messageQueue = {}
 
     def setStatus(self, device, pos):
         sValue = str(int(pos*100))
