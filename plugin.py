@@ -38,6 +38,7 @@
     </params>
 </plugin>
 """
+# pylint:disable=undefined-variable
 import Domoticz
 import json
 from datetime import datetime, timezone
@@ -52,6 +53,7 @@ class iimSlide:
         self.authorized = False
         self.messageQueue = {}
         self._expiretoken = None
+        self._dateType = 0  #0: Date including timezone info; 1: No timezone info. Workaround for strptime bug
 
         return
 
@@ -66,6 +68,7 @@ class iimSlide:
             Name="IIM Connection", Transport="TCP/IP", Protocol="HTTPS", Address="api.goslide.io", Port="443")
         self.myConn.Connect()
         self._tick = 0
+        self._dateType = 0
 
     def onStop(self):
         Domoticz.Log("onStop called")
@@ -100,10 +103,12 @@ class iimSlide:
                     self._expiretoken = datetime.strptime(
                         expires_at + ' +0000', "%Y-%m-%d %H:%M:%S %z"
                     )
+                    self._dateType=0
                 except TypeError:
                     self._expiretoken = datetime(*(time.strptime(
                         expires_at + ' +0000', "%Y-%m-%d %H:%M:%S %z"
                     )[0:7]))
+                    self._dateType=1
                 self.getOverview()
             else:
                 self._expiretoken = None
@@ -293,13 +298,21 @@ class iimSlide:
 
         if self._expiretoken is not None:
             from datetime import datetime, timezone
-            diff = self._expiretoken - datetime.now()
 
+            diffdays = 30 # In case of errors no token refresh
+            try:
+                if self._dateType == 0:
+                    diff = self._expiretoken - datetime.now(timezone.utc)
+                else:
+                    diff = self._expiretoken - datetime.now()
+                diffdays = diff.days
+            except:
+                Domoticz.Error('Error in computing date difference')
             # Reauthenticate if token is less then 7 days valid
-            if diff.days <= 7:
+            if diffdays <= 7:
                 Domoticz.Log(
                     "Authentication token will expire in {} days, renewing it".format(
-                        int(diff.days))
+                        int(diffdays))
                 )
                 self.authorize()
 
