@@ -3,36 +3,26 @@
 # Author: lokonli
 #
 """
-<plugin key="iim-slide" name="Slide by Innovation in Motion" author="lokonli" version="0.0.1" wikilink="https://github.com/lokonli/slide-domoticz" externallink="https://github.com/lokonli/slide-domoticz">
+<plugin key="iim-slide" name="Slide by Innovation in Motion" author="lokonli" version="0.0.1" wikilink="https://github.com/lokonli/slide-domoticz" externallink="https://slide.store/">
     <description>
         <h2>Slide by Innovation in Motion</h2><br/>
-        Plugin for Slide by Innovation in Motion.
-
-        It uses the Innovation in Motion open API. You must have registered your slide device.
-
-        This is an alpha release.
-        <h3>Features</h3>
-        <ul style="list-style-type:square">
-            <li>Feature one...</li>
-            <li>Feature two...</li>
-        </ul>
-        <h3>Devices</h3>
-        <ul style="list-style-type:square">
-            <li>Curtain - Device to control the curtain position</li>
-        </ul>
+        Plugin for Slide by Innovation in Motion.<br/>
+        <br/>
+        It uses the Innovation in Motion open API.<br/>
+        <br/>
+        This is an alpha release. <br/>
+        <br/>
         <h3>Configuration</h3>
         First you have to register via the Slide app.
-        
-        <h3>External links</h3>
-        <ul style="list-style-type:square">
-            <li><a href="https://slide.store/">Slide store</a></li>
-            <li><a href="https://slide.store/">Slide Open Cloud API</a></li>
-        </ul>
+        Fill in your email-address and password you used during registration below.<br/>
+        <br/>
+        Slides will be discovered and added to Domoticz automatically.<br/>
+        <br/>        
 
     </description>
     <params>
-           <param field="Mode1" label="Email address used for IIM registration" width="200px" required="true" default="name@gmail.com"/>
-           <param field="Mode2" label="Password used for IIM registraion" width="200px" required="true" default="" password="true"/>
+           <param field="Mode1" label="Email address" width="200px" required="true" default="name@gmail.com"/>
+           <param field="Mode2" label="Password" width="200px" required="true" default="" password="true"/>
             <param field="Mode6" label="Debug" width="150px">
             <options>
                 <option label="None" value="0"  default="true" />
@@ -53,12 +43,6 @@ import json
 from datetime import datetime, timezone
 import time
 import _strptime
-
-#import asyncio
-#from goslideapi import GoSlideCloud
-# Parameters = Parameters  # pylint:disable=invalid-name,used-before-assignment, undefined-variable
-# Devices = Devices  # pylint:disable=invalid-name,used-before-assignment, undefined-variable
-
 
 class iimSlide:
     enabled = False
@@ -277,7 +261,6 @@ class iimSlide:
         self.myConn.Send(sendData)
 
     def getOverview(self, delay=0):
-        #                Domoticz.Log(self.access_token)
         sendData = {'Verb': 'GET',
                     'URL': '/api/slides/overview',
                     'Headers': {'Content-Type': 'application/json',
