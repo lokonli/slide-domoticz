@@ -45,6 +45,7 @@ from datetime import datetime, timezone
 import time
 import _strptime
 
+
 class iimSlide:
     enabled = False
 
@@ -53,7 +54,8 @@ class iimSlide:
         self.authorized = False
         self.messageQueue = {}
         self._expiretoken = None
-        self._dateType = 0  #0: Date including timezone info; 1: No timezone info. Workaround for strptime bug
+        # 0: Date including timezone info; 1: No timezone info. Workaround for strptime bug
+        self._dateType = 0
 
         return
 
@@ -103,12 +105,12 @@ class iimSlide:
                     self._expiretoken = datetime.strptime(
                         expires_at + ' +0000', "%Y-%m-%d %H:%M:%S %z"
                     )
-                    self._dateType=0
+                    self._dateType = 0
                 except TypeError:
                     self._expiretoken = datetime(*(time.strptime(
                         expires_at + ' +0000', "%Y-%m-%d %H:%M:%S %z"
                     )[0:7]))
-                    self._dateType=1
+                    self._dateType = 1
                 self.getOverview()
             else:
                 self._expiretoken = None
@@ -130,14 +132,23 @@ class iimSlide:
                             Domoticz.Log('Device offline')
                         break
                 else:
-                    Domoticz.Log('Creating new device ')
+                    Domoticz.Log('New slide found')
                     Domoticz.Log(json.dumps(slide))
-                    myDev = Domoticz.Device(Name=slide["device_name"], Unit=len(
-                        Devices)+1, DeviceID=str(slide["id"]), Type=244, Subtype=73, Switchtype=13, Used=1)
-                    myDev.Create()
-                    # in case device is offline then no pos info
-                    if "pos" in slide["device_info"]:
-                        self.setStatus(myDev, slide["device_info"]["pos"])
+                    # During installation of Slide the name is null
+                    if len(slide["device_name"]) > 0:
+                        # Try to find the first free id
+                        units = list(range(1, len(Devices)+2))
+                        for device in Devices:
+                            units.remove(device)
+                        unit = min(units)
+                        myDev = Domoticz.Device(Name=slide["device_name"], Unit=unit, DeviceID=str(
+                            slide["id"]), Type=244, Subtype=73, Switchtype=13, Used=1)
+                        myDev.Create()
+                        # in case device is offline then no pos info
+                        if "pos" in slide["device_info"]:
+                            self.setStatus(myDev, slide["device_info"]["pos"])
+                    else:
+                        Domoticz.Log('Unnamed slide. Waiting for slide name.')
             if updated:
                 self.getOverview(1)
         else:
@@ -299,7 +310,7 @@ class iimSlide:
         if self._expiretoken is not None:
             from datetime import datetime, timezone
 
-            diffdays = 30 # In case of errors no token refresh
+            diffdays = 30  # In case of errors no token refresh
             try:
                 if self._dateType == 0:
                     diff = self._expiretoken - datetime.now(timezone.utc)

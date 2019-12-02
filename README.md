@@ -2,7 +2,8 @@
 Domoticz plugin for Slide by Innovation in Motion
 
 This is an alpha release.
-It's tested for a single slide only, but might work for multiple slides as well.
+
+The plugin was tested on a system with two slides.
 
 ## Installation
 
