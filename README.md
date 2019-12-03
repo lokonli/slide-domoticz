@@ -6,27 +6,7 @@ This is an alpha release.
 The plugin was tested on a system with two slides.
 
 ## Installation
-
-Create a folder name slide-domoticz in the domoticz/plugins folder:
-
-    cd <Domoticz>/plugins
-    mkdir slide-domoticz
-
-Copy plugin.py to this folder
-
-or, in domoticz/plugins:
-
-    git clone https://github.com/lokonli/slide-domoticz
-
-Then restart Domoticz.
-
-    sudo systemctl restart domoticz.service
-
-Add the Slide hardware to Domoticz. Slide can be found in Domoticz under Domoticz->Hardware
-
-In the configuration page fill in your email address and password as used for registration in the Slide app.
-
-Slide devices will be created automatically.
+[Installation instructions](https://github.com/lokonli/slide-domoticz/wiki/installation)
 
 ## Links
 https://slide.store/
