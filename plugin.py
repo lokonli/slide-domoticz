@@ -56,6 +56,7 @@ class iimSlide:
         self._expiretoken = None
         # 0: Date including timezone info; 1: No timezone info. Workaround for strptime bug
         self._dateType = 0
+        self._checkMovement = 0
 
         return
 
@@ -71,6 +72,8 @@ class iimSlide:
         self.myConn.Connect()
         self._tick = 0
         self._dateType = 0
+        self._checkMovement = 0
+
 
     def onStop(self):
         Domoticz.Log("onStop called")
@@ -149,8 +152,9 @@ class iimSlide:
                             self.setStatus(myDev, slide["device_info"]["pos"])
                     else:
                         Domoticz.Log('Unnamed slide. Waiting for slide name.')
-            if updated:
-                self.getOverview(1)
+            self._checkMovement = max(self._checkMovement-1, 0)
+            if updated | (self._checkMovement > 0):
+                self.getOverview(2)
         else:
             Domoticz.Log("Unhandled response")
             Domoticz.Log(json.dumps(Response))
@@ -224,7 +228,10 @@ class iimSlide:
             self.myConn.Connect()
         else:
             self.myConn.Send(sendData)
-            self.getOverview(1)
+            #only start checking if we are not checking yet
+            self._checkMovement=min(self._checkMovement+1,2)
+            if self._checkMovement == 1:
+                self.getOverview(2)
 
     def getPosition(self, id, delay=0):
         sendData = {'Verb': 'GET',
@@ -257,7 +264,10 @@ class iimSlide:
             self.myConn.Connect()
         else:
             self.myConn.Send(sendData)
-            self.getOverview(1)
+            #only start checking if we are not checking yet
+            self._checkMovement=min(self._checkMovement+1,2)
+            if self._checkMovement == 1:
+                self.getOverview(2)
 
     def authorize(self):
         postdata = {
@@ -305,7 +315,8 @@ class iimSlide:
         self._tick = self._tick + 1
         if self._tick > 4:
             self._tick = 0
-            self.getOverview(1)
+            if self._checkMovement == 0:
+                self.getOverview(1)
 
         if self._expiretoken is not None:
             from datetime import datetime, timezone
