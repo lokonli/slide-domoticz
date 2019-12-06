@@ -1,7 +1,7 @@
 # slide-domoticz
 Domoticz plugin for Slide by Innovation in Motion
 
-This is an alpha release.
+This is a beta release.
 
 The plugin was tested on a system with two slides.
 

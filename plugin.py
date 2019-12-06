@@ -3,14 +3,14 @@
 # Author: lokonli
 #
 """
-<plugin key="iim-slide" name="Slide by Innovation in Motion" author="lokonli" version="0.0.1" wikilink="https://github.com/lokonli/slide-domoticz" externallink="https://slide.store/">
+<plugin key="iim-slide" name="Slide by Innovation in Motion" author="lokonli" version="0.1.0" wikilink="https://github.com/lokonli/slide-domoticz" externallink="https://slide.store/">
     <description>
         <h2>Slide by Innovation in Motion</h2><br/>
         Plugin for Slide by Innovation in Motion.<br/>
         <br/>
         It uses the Innovation in Motion open API.<br/>
         <br/>
-        This is an alpha release. <br/>
+        This is a beta release. <br/>
         <br/>
         <h3>Configuration</h3>
         First you have to register via the Slide app.
