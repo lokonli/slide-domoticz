@@ -10,6 +10,7 @@ The plugin was tested on a system with two slides.
 
 ## Links
 [Domoticz forum](https://www.domoticz.com/forum/viewtopic.php?f=65&t=30449)
+
 https://slide.store/
 
 ## Documentation
