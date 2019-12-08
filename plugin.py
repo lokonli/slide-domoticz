@@ -138,7 +138,7 @@ class iimSlide:
                     Domoticz.Log('New slide found')
                     Domoticz.Log(json.dumps(slide))
                     # During installation of Slide the name is null
-                    if len(slide["device_name"]) > 0:
+                    if slide["device_name"] != None:
                         # Try to find the first free id
                         units = list(range(1, len(Devices)+2))
                         for device in Devices:
