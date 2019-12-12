@@ -3,14 +3,14 @@
 # Author: lokonli
 #
 """
-<plugin key="iim-slide" name="Slide by Innovation in Motion" author="lokonli" version="0.1.1" wikilink="https://github.com/lokonli/slide-domoticz" externallink="https://slide.store/">
+<plugin key="iim-slide" name="Slide by Innovation in Motion" author="lokonli" version="0.1.2" wikilink="https://github.com/lokonli/slide-domoticz" externallink="https://slide.store/">
     <description>
         <h2>Slide by Innovation in Motion</h2><br/>
         Plugin for Slide by Innovation in Motion.<br/>
         <br/>
         It uses the Innovation in Motion open API.<br/>
         <br/>
-        This is a beta release. <br/>
+        This is beta release 0.1.2. <br/>
         <br/>
         <h3>Configuration</h3>
         First you have to register via the Slide app.
@@ -128,9 +128,13 @@ class iimSlide:
                     if (Devices[device].DeviceID == str(slide["id"])):
                         Domoticz.Log('Device exists')
                         # in case device is offline then no pos info
-                        if "pos" in slide["device_info"]:
-                            if self.setStatus(Devices[device], slide["device_info"]["pos"]):
-                                updated = True
+                        if "device_info" in slide:
+                            if "pos" in slide["device_info"]:
+                                if self.setStatus(Devices[device], slide["device_info"]["pos"]):
+                                    updated = True
+                            else:
+                                Domoticz.Log('Device offline')
+                            break
                         else:
                             Domoticz.Log('Device offline')
                         break
@@ -178,6 +182,8 @@ class iimSlide:
             Domoticz.Error("IIM returned a Bad Request Error.")
         elif (Status == 500):
             Domoticz.Error("IIM returned a Server Error.")
+        elif (Status == 424):
+            Domoticz.Log('Status 424: At least one slide is offline')
         else:
             Domoticz.Error("IIM returned a status: "+str(Status))
 
