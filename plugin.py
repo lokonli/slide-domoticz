@@ -3,14 +3,14 @@
 # Author: lokonli
 #
 """
-<plugin key="iim-slide" name="Slide by Innovation in Motion" author="lokonli" version="0.1.2" wikilink="https://github.com/lokonli/slide-domoticz" externallink="https://slide.store/">
+<plugin key="iim-slide" name="Slide by Innovation in Motion" author="lokonli" version="0.1.4" wikilink="https://github.com/lokonli/slide-domoticz" externallink="https://slide.store/">
     <description>
         <h2>Slide by Innovation in Motion</h2><br/>
         Plugin for Slide by Innovation in Motion.<br/>
         <br/>
         It uses the Innovation in Motion open API.<br/>
         <br/>
-        This is beta release 0.1.2. <br/>
+        This is beta release 0.1.4. <br/>
         <br/>
         <h3>Configuration</h3>
         First you have to register via the Slide app.
@@ -171,7 +171,7 @@ class iimSlide:
             sendData = {'Verb': 'POST',
                         'URL': Data["Headers"]["Location"],
                         'Headers': {'Content-Type': 'Content-Type: application/json',
-                                    'Connection': 'keep-alive',
+#                                    'Connection': 'keep-alive',
                                     'Accept': 'Content-Type: application/json',
                                     'Host': Parameters["Address"],
                                     'User-Agent': 'Domoticz/1.0'},
@@ -223,7 +223,7 @@ class iimSlide:
                     'URL': '/api/slide/{}/position'.format(id),
                     'Headers': {'Content-Type': 'application/json',
                                 'Host': 'api.goslide.io',
-                                'Connection': 'keep-alive',
+#                                'Connection': 'keep-alive',
                                 'Accept': 'application/json',
                                 'X-Requested-With': 'XMLHttpRequest',
                                 'Authorization': 'Bearer ' + self.access_token},
@@ -244,7 +244,7 @@ class iimSlide:
                     'URL': '/api/slide/{}/info'.format(id),
                     'Headers': {'Content-Type': 'application/json',
                                 'Host': 'api.goslide.io',
-                                'Connection': 'keep-alive',
+#                                'Connection': 'keep-alive',
                                 'Accept': 'application/json',
                                 'X-Requested-With': 'XMLHttpRequest',
                                 'Authorization': 'Bearer ' + self.access_token}
@@ -260,7 +260,7 @@ class iimSlide:
                     'URL': '/api/slide/{}/stop'.format(id),
                     'Headers': {'Content-Type': 'application/json',
                                 'Host': 'api.goslide.io',
-                                'Connection': 'keep-alive',
+#                                'Connection': 'keep-alive',
                                 'Accept': 'application/json',
                                 'X-Requested-With': 'XMLHttpRequest',
                                 'Authorization': 'Bearer ' + self.access_token}
@@ -284,7 +284,7 @@ class iimSlide:
         sendData = {'Verb': 'POST',
                     'URL': '/api/auth/login',
                     'Headers': {'Content-Type': 'application/json',
-                                'Connection': 'keep-alive',
+#                                'Connection': 'keep-alive',
                                 'Accept': 'application/json',
                                 'Host': 'api.goslide.io',
                                 'User-Agent': 'Domoticz/1.0'},
@@ -296,7 +296,7 @@ class iimSlide:
         sendData = {'Verb': 'GET',
                     'URL': '/api/slides/overview',
                     'Headers': {'Content-Type': 'application/json',
-                                'Connection': 'keep-alive',
+#                                'Connection': 'keep-alive',
                                 'Host': 'api.goslide.io',
                                 'Accept': 'application/json',
                                 'X-Requested-With': 'XMLHttpRequest',
@@ -319,7 +319,7 @@ class iimSlide:
 
     def onHeartbeat(self):
         self._tick = self._tick + 1
-        if self._tick > 4:
+        if self._tick > 3:
             self._tick = 0
             if self._checkMovement == 0:
                 self.getOverview(1)
