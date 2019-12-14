@@ -3,14 +3,14 @@
 # Author: lokonli
 #
 """
-<plugin key="iim-slide" name="Slide by Innovation in Motion" author="lokonli" version="0.1.4" wikilink="https://github.com/lokonli/slide-domoticz" externallink="https://slide.store/">
+<plugin key="iim-slide" name="Slide by Innovation in Motion" author="lokonli" version="0.1.5" wikilink="https://github.com/lokonli/slide-domoticz" externallink="https://slide.store/">
     <description>
         <h2>Slide by Innovation in Motion</h2><br/>
         Plugin for Slide by Innovation in Motion.<br/>
         <br/>
         It uses the Innovation in Motion open API.<br/>
         <br/>
-        This is beta release 0.1.4. <br/>
+        This is beta release 0.1.5. <br/>
         <br/>
         <h3>Configuration</h3>
         First you have to register via the Slide app.
@@ -97,7 +97,11 @@ class iimSlide:
 
         strData = Data["Data"].decode("utf-8", "ignore")
         Status = int(Data["Status"])
-        Response = json.loads(strData)
+        try:
+            Response = json.loads(strData)
+        except:
+            Domoticz.Log("Invalid response data")
+            return
         if ("access_token" in Response):
             self.access_token = Response["access_token"]
             self.authorized = True
