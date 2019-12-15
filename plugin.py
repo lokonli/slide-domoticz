@@ -3,14 +3,14 @@
 # Author: lokonli
 #
 """
-<plugin key="iim-slide" name="Slide by Innovation in Motion" author="lokonli" version="0.1.5" wikilink="https://github.com/lokonli/slide-domoticz" externallink="https://slide.store/">
+<plugin key="iim-slide" name="Slide by Innovation in Motion" author="lokonli" version="0.1.6" wikilink="https://github.com/lokonli/slide-domoticz" externallink="https://slide.store/">
     <description>
         <h2>Slide by Innovation in Motion</h2><br/>
         Plugin for Slide by Innovation in Motion.<br/>
         <br/>
         It uses the Innovation in Motion open API.<br/>
         <br/>
-        This is beta release 0.1.5. <br/>
+        This is beta release 0.1.6. <br/>
         <br/>
         <h3>Configuration</h3>
         First you have to register via the Slide app.
@@ -198,10 +198,10 @@ class iimSlide:
     def setStatus(self, device, pos):
         sValue = str(int(pos*100))
         nValue = 2
-        if pos < 0.08:
+        if pos < 0.13:
             nValue = 0
             sValue = '0'
-        if pos > 0.92:
+        if pos > 0.87:
             nValue = 1
             sValue = '100'
         if(device.sValue != sValue):
