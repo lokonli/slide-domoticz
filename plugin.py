@@ -3,14 +3,14 @@
 # Author: lokonli
 #
 """
-<plugin key="iim-slide" name="Slide by Innovation in Motion" author="lokonli" version="0.1.6" wikilink="https://github.com/lokonli/slide-domoticz" externallink="https://slide.store/">
+<plugin key="iim-slide" name="Slide by Innovation in Motion" author="lokonli" version="0.1.7" wikilink="https://github.com/lokonli/slide-domoticz" externallink="https://slide.store/">
     <description>
         <h2>Slide by Innovation in Motion</h2><br/>
         Plugin for Slide by Innovation in Motion.<br/>
         <br/>
         It uses the Innovation in Motion open API.<br/>
         <br/>
-        This is beta release 0.1.6. <br/>
+        This is beta release 0.1.7. <br/>
         <br/>
         <h3>Configuration</h3>
         First you have to register via the Slide app.
@@ -51,7 +51,7 @@ class iimSlide:
 
     def __init__(self):
         #self.var = 123
-        self.authorized = False
+        self.access_token = ''
         self.messageQueue = {}
         self._expiretoken = None
         # 0: Date including timezone info; 1: No timezone info. Workaround for strptime bug
@@ -66,13 +66,14 @@ class iimSlide:
             Domoticz.Debugging(int(Parameters["Mode6"]))
             DumpConfigToLog()
         Domoticz.Log("Length {}".format(len(self.messageQueue)))
+        self._tick = 0
+        self._dateType = 0
+        self._checkMovement = 0
+        self.access_token = ''
 
         self.myConn = Domoticz.Connection(
             Name="IIM Connection", Transport="TCP/IP", Protocol="HTTPS", Address="api.goslide.io", Port="443")
         self.myConn.Connect()
-        self._tick = 0
-        self._dateType = 0
-        self._checkMovement = 0
 
 
     def onStop(self):
@@ -81,7 +82,7 @@ class iimSlide:
     def onConnect(self, Connection, Status, Description):
         if (Status == 0):
             Domoticz.Debug("IIM connected successfully.")
-            if (not self.authorized):
+            if (self.access_token == ''):
                 self.authorize()
             elif len(self.messageQueue) > 0:
                 Connection.Send(self.messageQueue)
@@ -104,7 +105,6 @@ class iimSlide:
             return
         if ("access_token" in Response):
             self.access_token = Response["access_token"]
-            self.authorized = True
             if "expires_at" in Response:
                 from datetime import datetime
                 expires_at = Response["expires_at"]
@@ -192,7 +192,7 @@ class iimSlide:
             Domoticz.Error("IIM returned a status: "+str(Status))
 
         if len(self.messageQueue) > 0:
-            Connection.Send(self.messageQueue)
+            self.slideRequest(self.messageQueue)
             self.messageQueue = {}
 
     def setStatus(self, device, pos):
@@ -222,62 +222,37 @@ class iimSlide:
         if (Command == 'Stop'):
             self.slideStop(Devices[Unit].DeviceID, Level/100)
 
+    def slideRequest(self, sendData, delay=0):
+        if ((not self.myConn.Connected()) or (self.access_token == '')):
+            self.messageQueue = sendData
+            self.myConn.Connect()
+        else:
+            sendData['Headers'] = {'Content-Type': 'application/json',
+                                'Host': 'api.goslide.io',
+                                'Accept': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Authorization': 'Bearer ' + self.access_token
+                                }
+            self.myConn.Send(sendData, delay)
+            #only start checking if we are not checking yet
+            if (sendData['Verb']=='POST'):
+                self._checkMovement=min(self._checkMovement+1,2)
+                if self._checkMovement == 1:
+                    self.getOverview(2)
+ 
     def setPosition(self, id, level):
         sendData = {'Verb': 'POST',
                     'URL': '/api/slide/{}/position'.format(id),
-                    'Headers': {'Content-Type': 'application/json',
-                                'Host': 'api.goslide.io',
-#                                'Connection': 'keep-alive',
-                                'Accept': 'application/json',
-                                'X-Requested-With': 'XMLHttpRequest',
-                                'Authorization': 'Bearer ' + self.access_token},
                     'Data': json.dumps({"pos": str(level)})
                     }
-        if (not self.myConn.Connected()):
-            self.messageQueue = sendData
-            self.myConn.Connect()
-        else:
-            self.myConn.Send(sendData)
-            #only start checking if we are not checking yet
-            self._checkMovement=min(self._checkMovement+1,2)
-            if self._checkMovement == 1:
-                self.getOverview(2)
-
-    def getPosition(self, id, delay=0):
-        sendData = {'Verb': 'GET',
-                    'URL': '/api/slide/{}/info'.format(id),
-                    'Headers': {'Content-Type': 'application/json',
-                                'Host': 'api.goslide.io',
-#                                'Connection': 'keep-alive',
-                                'Accept': 'application/json',
-                                'X-Requested-With': 'XMLHttpRequest',
-                                'Authorization': 'Bearer ' + self.access_token}
-                    }
-        if (not self.myConn.Connected()):
-            self.messageQueue = sendData
-            self.myConn.Connect()
-        else:
-            self.myConn.Send(sendData, delay)
+        self.slideRequest(sendData)
 
     def slideStop(self, id, level):
         sendData = {'Verb': 'POST',
-                    'URL': '/api/slide/{}/stop'.format(id),
-                    'Headers': {'Content-Type': 'application/json',
-                                'Host': 'api.goslide.io',
-#                                'Connection': 'keep-alive',
-                                'Accept': 'application/json',
-                                'X-Requested-With': 'XMLHttpRequest',
-                                'Authorization': 'Bearer ' + self.access_token}
+                    'URL': '/api/slide/{}/stop'.format(id)
                     }
-        if (not self.myConn.Connected()):
-            self.messageQueue = sendData
-            self.myConn.Connect()
-        else:
-            self.myConn.Send(sendData)
-            #only start checking if we are not checking yet
-            self._checkMovement=min(self._checkMovement+1,2)
-            if self._checkMovement == 1:
-                self.getOverview(2)
+        self.slideRequest(sendData)
+
 
     def authorize(self):
         postdata = {
@@ -288,7 +263,6 @@ class iimSlide:
         sendData = {'Verb': 'POST',
                     'URL': '/api/auth/login',
                     'Headers': {'Content-Type': 'application/json',
-#                                'Connection': 'keep-alive',
                                 'Accept': 'application/json',
                                 'Host': 'api.goslide.io',
                                 'User-Agent': 'Domoticz/1.0'},
@@ -298,20 +272,9 @@ class iimSlide:
 
     def getOverview(self, delay=0):
         sendData = {'Verb': 'GET',
-                    'URL': '/api/slides/overview',
-                    'Headers': {'Content-Type': 'application/json',
-#                                'Connection': 'keep-alive',
-                                'Host': 'api.goslide.io',
-                                'Accept': 'application/json',
-                                'X-Requested-With': 'XMLHttpRequest',
-                                'Authorization': 'Bearer ' + self.access_token},
-                    #                            'Data' : ''
+                    'URL': '/api/slides/overview'
                     }
-        if (not self.myConn.Connected()):
-            self.messageQueue = sendData
-            self.myConn.Connect()
-        else:
-            self.myConn.Send(sendData, delay)
+        self.slideRequest(sendData, delay)
 
     def onNotification(self, Name, Subject, Text, Status, Priority, Sound, ImageFile):
         Domoticz.Log("Notification: " + Name + "," + Subject + "," + Text +
@@ -319,7 +282,6 @@ class iimSlide:
 
     def onDisconnect(self, Connection):
         Domoticz.Log("onDisconnect called")
-        self.connected = False
 
     def onHeartbeat(self):
         self._tick = self._tick + 1
