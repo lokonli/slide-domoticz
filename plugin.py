@@ -3,14 +3,14 @@
 # Author: lokonli
 #
 """
-<plugin key="iim-slide" name="Slide by Innovation in Motion" author="lokonli" version="0.1.7" wikilink="https://github.com/lokonli/slide-domoticz" externallink="https://slide.store/">
+<plugin key="iim-slide" name="Slide by Innovation in Motion" author="lokonli" version="0.1.8" wikilink="https://github.com/lokonli/slide-domoticz" externallink="https://slide.store/">
     <description>
         <h2>Slide by Innovation in Motion</h2><br/>
         Plugin for Slide by Innovation in Motion.<br/>
         <br/>
         It uses the Innovation in Motion open API.<br/>
         <br/>
-        This is beta release 0.1.7. <br/>
+        This is beta release 0.1.8. <br/>
         <br/>
         <h3>Configuration</h3>
         First you have to register via the Slide app.
@@ -85,9 +85,9 @@ class iimSlide:
             if (self.access_token == ''):
                 self.authorize()
             elif len(self.messageQueue) > 0:
-                Connection.Send(self.messageQueue)
+                self.slideRequest(self.messageQueue)
                 self.messageQueue = {}
-                self.getOverview(1)
+                #self.getOverview(1)
         else:
             Domoticz.Log("Failed to connect ("+str(Status)+") to: " +
                          Parameters["Address"]+" with error: "+Description)
@@ -223,10 +223,7 @@ class iimSlide:
             self.slideStop(Devices[Unit].DeviceID, Level/100)
 
     def slideRequest(self, sendData, delay=0):
-        if ((not self.myConn.Connected()) or (self.access_token == '')):
-            self.messageQueue = sendData
-            self.myConn.Connect()
-        else:
+        if self.myConn.Connected()  & (self.access_token != ''):
             sendData['Headers'] = {'Content-Type': 'application/json',
                                 'Host': 'api.goslide.io',
                                 'Accept': 'application/json',
@@ -239,6 +236,9 @@ class iimSlide:
                 self._checkMovement=min(self._checkMovement+1,2)
                 if self._checkMovement == 1:
                     self.getOverview(2)
+        else:
+            self.messageQueue = sendData
+            self.myConn.Connect()
  
     def setPosition(self, id, level):
         sendData = {'Verb': 'POST',
@@ -282,13 +282,13 @@ class iimSlide:
 
     def onDisconnect(self, Connection):
         Domoticz.Log("onDisconnect called")
+        self._checkMovement = 0
 
     def onHeartbeat(self):
         self._tick = self._tick + 1
         if self._tick > 3:
             self._tick = 0
-            if self._checkMovement == 0:
-                self.getOverview(1)
+            self.getOverview()
 
         if self._expiretoken is not None:
             from datetime import datetime, timezone
