@@ -286,7 +286,7 @@ class iimSlide:
 
     def onHeartbeat(self):
         self._tick = self._tick + 1
-        if self._tick > 3:
+        if self._tick > 1:
             self._tick = 0
             self.getOverview()
 
