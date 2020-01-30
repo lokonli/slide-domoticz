@@ -3,14 +3,14 @@
 # Author: lokonli
 #
 """
-<plugin key="iim-slide" name="Slide by Innovation in Motion" author="lokonli" version="0.1.8" wikilink="https://github.com/lokonli/slide-domoticz" externallink="https://slide.store/">
+<plugin key="iim-slide" name="Slide by Innovation in Motion" author="lokonli" version="0.1.9" wikilink="https://github.com/lokonli/slide-domoticz" externallink="https://slide.store/">
     <description>
         <h2>Slide by Innovation in Motion</h2><br/>
         Plugin for Slide by Innovation in Motion.<br/>
         <br/>
         It uses the Innovation in Motion open API.<br/>
         <br/>
-        This is beta release 0.1.8. <br/>
+        This is beta release 0.1.9. <br/>
         <br/>
         <h3>Configuration</h3>
         First you have to register via the Slide app.
@@ -61,11 +61,11 @@ class iimSlide:
         return
 
     def onStart(self):
-        Domoticz.Log("onStart called")
+        Domoticz.Debug("onStart called")
         if Parameters["Mode6"] != "0":
             Domoticz.Debugging(int(Parameters["Mode6"]))
             DumpConfigToLog()
-        Domoticz.Log("Length {}".format(len(self.messageQueue)))
+        Domoticz.Debug("Length {}".format(len(self.messageQueue)))
         self._tick = 0
         self._dateType = 0
         self._checkMovement = 0
@@ -75,9 +75,8 @@ class iimSlide:
             Name="IIM Connection", Transport="TCP/IP", Protocol="HTTPS", Address="api.goslide.io", Port="443")
         self.myConn.Connect()
 
-
     def onStop(self):
-        Domoticz.Log("onStop called")
+        Domoticz.Debug("onStop called")
 
     def onConnect(self, Connection, Status, Description):
         if (Status == 0):
@@ -87,13 +86,13 @@ class iimSlide:
             elif len(self.messageQueue) > 0:
                 self.slideRequest(self.messageQueue)
                 self.messageQueue = {}
-                #self.getOverview(1)
+                # self.getOverview(1)
         else:
-            Domoticz.Log("Failed to connect ("+str(Status)+") to: " +
-                         Parameters["Address"]+" with error: "+Description)
+            Domoticz.Error("Failed to connect ("+str(Status)+") to: " +
+                           Parameters["Address"]+" with error: "+Description)
 
     def onMessage(self, Connection, Data):
-        Domoticz.Log("onMessage called")
+        Domoticz.Debug("onMessage called")
         DumpHTTPResponseToLog(Data)
 
         strData = Data["Data"].decode("utf-8", "ignore")
@@ -101,7 +100,7 @@ class iimSlide:
         try:
             Response = json.loads(strData)
         except:
-            Domoticz.Log("Invalid response data")
+            Domoticz.Debug("Invalid response data")
             return
         if ("access_token" in Response):
             self.access_token = Response["access_token"]
@@ -127,20 +126,21 @@ class iimSlide:
         elif ("slides" in Response):
             updated = False
             for slide in Response["slides"]:
-                Domoticz.Log('Slide id: {}'.format(slide["id"]))
+                Domoticz.Debug('Slide id: {}'.format(slide["id"]))
                 for device in Devices:
                     if (Devices[device].DeviceID == str(slide["id"])):
-                        Domoticz.Log('Device exists')
+                        Domoticz.Debug('Device exists')
                         # in case device is offline then no pos info
                         if "device_info" in slide:
                             if "pos" in slide["device_info"]:
                                 if self.setStatus(Devices[device], slide["device_info"]["pos"]):
                                     updated = True
                             else:
-                                Domoticz.Log('Device offline')
+                                Domoticz.Log('Device offline: ' +
+                                             str(slide["id"]))
                             break
                         else:
-                            Domoticz.Log('Device offline')
+                            Domoticz.Log('Device offline: ' + str(slide["id"]))
                         break
                 else:
                     Domoticz.Log('New slide found')
@@ -159,23 +159,24 @@ class iimSlide:
                         if "pos" in slide["device_info"]:
                             self.setStatus(myDev, slide["device_info"]["pos"])
                     else:
-                        Domoticz.Log('Unnamed slide. Waiting for slide name.')
+                        Domoticz.Debug(
+                            'Unnamed slide. Waiting for slide name.')
             self._checkMovement = max(self._checkMovement-1, 0)
             if updated | (self._checkMovement > 0):
                 self.getOverview(2)
         else:
-            Domoticz.Log("Unhandled response")
-            Domoticz.Log(json.dumps(Response))
+            Domoticz.Debug("Unhandled response")
+            Domoticz.Debug(json.dumps(Response))
 
         if (Status == 200):
-            Domoticz.Log("Good Response received from IIM")
+            Domoticz.Debug("Good Response received from IIM")
 
         elif (Status == 302):
-            Domoticz.Log("IIM returned a Page Moved Error.")
+            Domoticz.Debug("IIM returned a Page Moved Error.")
             sendData = {'Verb': 'POST',
                         'URL': Data["Headers"]["Location"],
                         'Headers': {'Content-Type': 'Content-Type: application/json',
-#                                    'Connection': 'keep-alive',
+                                    #                                    'Connection': 'keep-alive',
                                     'Accept': 'Content-Type: application/json',
                                     'Host': Parameters["Address"],
                                     'User-Agent': 'Domoticz/1.0'},
@@ -187,9 +188,9 @@ class iimSlide:
         elif (Status == 500):
             Domoticz.Error("IIM returned a Server Error.")
         elif (Status == 424):
-            Domoticz.Log('Status 424: At least one slide is offline')
+            Domoticz.Debug('Status 424: At least one slide is offline')
         else:
-            Domoticz.Error("IIM returned a status: "+str(Status))
+            Domoticz.Debug("IIM returned a status: "+str(Status))
 
         if len(self.messageQueue) > 0:
             self.slideRequest(self.messageQueue)
@@ -211,8 +212,8 @@ class iimSlide:
             return False
 
     def onCommand(self, Unit, Command, Level, Hue):
-        Domoticz.Log("onCommand called for Unit " + str(Unit) +
-                     ": Parameter '" + str(Command) + "', Level: " + str(Level))
+        Domoticz.Debug("onCommand called for Unit " + str(Unit) +
+                       ": Parameter '" + str(Command) + "', Level: " + str(Level))
         if (Command == 'Off'):
             self.setPosition(Devices[Unit].DeviceID, 0)
         if (Command == 'On'):
@@ -223,23 +224,23 @@ class iimSlide:
             self.slideStop(Devices[Unit].DeviceID, Level/100)
 
     def slideRequest(self, sendData, delay=0):
-        if self.myConn.Connected()  & (self.access_token != ''):
+        if self.myConn.Connected() & (self.access_token != ''):
             sendData['Headers'] = {'Content-Type': 'application/json',
-                                'Host': 'api.goslide.io',
-                                'Accept': 'application/json',
-                                'X-Requested-With': 'XMLHttpRequest',
-                                'Authorization': 'Bearer ' + self.access_token
-                                }
+                                   'Host': 'api.goslide.io',
+                                   'Accept': 'application/json',
+                                   'X-Requested-With': 'XMLHttpRequest',
+                                   'Authorization': 'Bearer ' + self.access_token
+                                   }
             self.myConn.Send(sendData, delay)
-            #only start checking if we are not checking yet
-            if (sendData['Verb']=='POST'):
-                self._checkMovement=min(self._checkMovement+1,2)
+            # only start checking if we are not checking yet
+            if (sendData['Verb'] == 'POST'):
+                self._checkMovement = min(self._checkMovement+1, 2)
                 if self._checkMovement == 1:
                     self.getOverview(2)
         else:
             self.messageQueue = sendData
             self.myConn.Connect()
- 
+
     def setPosition(self, id, level):
         sendData = {'Verb': 'POST',
                     'URL': '/api/slide/{}/position'.format(id),
@@ -252,7 +253,6 @@ class iimSlide:
                     'URL': '/api/slide/{}/stop'.format(id)
                     }
         self.slideRequest(sendData)
-
 
     def authorize(self):
         postdata = {
@@ -277,11 +277,11 @@ class iimSlide:
         self.slideRequest(sendData, delay)
 
     def onNotification(self, Name, Subject, Text, Status, Priority, Sound, ImageFile):
-        Domoticz.Log("Notification: " + Name + "," + Subject + "," + Text +
-                     "," + Status + "," + str(Priority) + "," + Sound + "," + ImageFile)
+        Domoticz.Debug("Notification: " + Name + "," + Subject + "," + Text +
+                       "," + Status + "," + str(Priority) + "," + Sound + "," + ImageFile)
 
     def onDisconnect(self, Connection):
-        Domoticz.Log("onDisconnect called")
+        Domoticz.Debug("onDisconnect called")
         self._checkMovement = 0
 
     def onHeartbeat(self):
@@ -304,7 +304,7 @@ class iimSlide:
                 Domoticz.Error('Error in computing date difference')
             # Reauthenticate if token is less then 7 days valid
             if diffdays <= 7:
-                Domoticz.Log(
+                Domoticz.Debug(
                     "Authentication token will expire in {} days, renewing it".format(
                         int(diffdays))
                 )
@@ -359,7 +359,7 @@ def onHeartbeat():
 
 
 def LogMessage(Message):
-    Domoticz.Log(Message)
+    Domoticz.Debug(Message)
 
 
 def DumpConfigToLog():
