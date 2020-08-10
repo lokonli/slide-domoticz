@@ -227,7 +227,7 @@ class iimSlide:
 
     def slideRequest(self, sendData, delay=0):
         Domoticz.Debug("slideRequest called")
-        if self.myConn.Connected() & (self.access_token != ''):
+        if self.myConn.Connected() and (self.access_token != ''):
             sendData['Headers'] = {'Content-Type': 'application/json',
                                    'Host': 'api.goslide.io',
                                    'Accept': 'application/json',
