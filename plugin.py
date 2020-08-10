@@ -3,14 +3,14 @@
 # Author: lokonli
 #
 """
-<plugin key="iim-slide" name="Slide by Innovation in Motion" author="lokonli" version="0.1.9" wikilink="https://github.com/lokonli/slide-domoticz" externallink="https://slide.store/">
+<plugin key="iim-slide" name="Slide by Innovation in Motion" author="lokonli" version="0.1.10" wikilink="https://github.com/lokonli/slide-domoticz" externallink="https://slide.store/">
     <description>
         <h2>Slide by Innovation in Motion</h2><br/>
         Plugin for Slide by Innovation in Motion.<br/>
         <br/>
         It uses the Innovation in Motion open API.<br/>
         <br/>
-        This is beta release 0.1.9. <br/>
+        This is beta release 0.1.10. <br/>
         <br/>
         <h3>Configuration</h3>
         First you have to register via the Slide app.
@@ -79,6 +79,7 @@ class iimSlide:
         Domoticz.Debug("onStop called")
 
     def onConnect(self, Connection, Status, Description):
+        Domoticz.Debug("onConnect called")
         if (Status == 0):
             Domoticz.Debug("IIM connected successfully.")
             if (self.access_token == ''):
@@ -197,6 +198,7 @@ class iimSlide:
             self.messageQueue = {}
 
     def setStatus(self, device, pos):
+        Domoticz.Debug("setStatus called")
         sValue = str(int(pos*100))
         nValue = 2
         if pos < 0.13:
@@ -224,7 +226,8 @@ class iimSlide:
             self.slideStop(Devices[Unit].DeviceID, Level/100)
 
     def slideRequest(self, sendData, delay=0):
-        if self.myConn.Connected() & (self.access_token != ''):
+        Domoticz.Debug("slideRequest called")
+        if self.myConn.Connected() and (self.access_token != ''):
             sendData['Headers'] = {'Content-Type': 'application/json',
                                    'Host': 'api.goslide.io',
                                    'Accept': 'application/json',
@@ -242,6 +245,7 @@ class iimSlide:
             self.myConn.Connect()
 
     def setPosition(self, id, level):
+        Domoticz.Debug("setPosition called")
         sendData = {'Verb': 'POST',
                     'URL': '/api/slide/{}/position'.format(id),
                     'Data': json.dumps({"pos": str(level)})
@@ -249,12 +253,14 @@ class iimSlide:
         self.slideRequest(sendData)
 
     def slideStop(self, id, level):
+        Domoticz.Debug("slideStop called")
         sendData = {'Verb': 'POST',
                     'URL': '/api/slide/{}/stop'.format(id)
                     }
         self.slideRequest(sendData)
 
     def authorize(self):
+        Domoticz.Debug("authorize called")
         postdata = {
             'email': Parameters["Mode1"],
             'password': Parameters['Mode2']
@@ -271,6 +277,7 @@ class iimSlide:
         self.myConn.Send(sendData)
 
     def getOverview(self, delay=0):
+        Domoticz.Debug("getOverview called")
         sendData = {'Verb': 'GET',
                     'URL': '/api/slides/overview'
                     }
@@ -282,6 +289,7 @@ class iimSlide:
 
     def onDisconnect(self, Connection):
         Domoticz.Debug("onDisconnect called")
+        self.myConn.Connect()
         self._checkMovement = 0
 
     def onHeartbeat(self):
