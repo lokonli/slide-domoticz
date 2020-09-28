@@ -242,7 +242,8 @@ class iimSlide:
                     self.getOverview(2)
         else:
             self.messageQueue = sendData
-            self.myConn.Connect()
+            if (not self.myConn.Connecting()):
+                self.myConn.Connect()
 
     def setPosition(self, id, level):
         Domoticz.Debug("setPosition called")
@@ -289,7 +290,8 @@ class iimSlide:
 
     def onDisconnect(self, Connection):
         Domoticz.Debug("onDisconnect called")
-        self.myConn.Connect()
+        if (not self.myConn.Connecting()):
+            self.myConn.Connect()
         self._checkMovement = 0
 
     def onHeartbeat(self):
