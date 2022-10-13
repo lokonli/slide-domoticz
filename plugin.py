@@ -216,9 +216,9 @@ class iimSlide:
     def onCommand(self, Unit, Command, Level, Hue):
         Domoticz.Debug("onCommand called for Unit " + str(Unit) +
                        ": Parameter '" + str(Command) + "', Level: " + str(Level))
-        if (Command == 'Off' or Command == 'Close'):
+        if (Command == 'Off' or Command == 'Open'):
             self.setPosition(Devices[Unit].DeviceID, 0)
-        if (Command == 'On' or Command == 'Open'):
+        if (Command == 'On' or Command == 'Close'):
             self.setPosition(Devices[Unit].DeviceID, 1)
         if (Command == 'Set Level'):
             self.setPosition(Devices[Unit].DeviceID, Level/100)
