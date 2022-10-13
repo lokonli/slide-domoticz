@@ -10,7 +10,7 @@
         <br/>
         It uses the Innovation in Motion open API.<br/>
         <br/>
-        This is beta release 0.1.10. <br/>
+        This is release 1.0.0. <br/>
         <br/>
         <h3>Configuration</h3>
         First you have to register via the Slide app.
@@ -216,9 +216,9 @@ class iimSlide:
     def onCommand(self, Unit, Command, Level, Hue):
         Domoticz.Debug("onCommand called for Unit " + str(Unit) +
                        ": Parameter '" + str(Command) + "', Level: " + str(Level))
-        if (Command == 'Off'):
+        if (Command == 'Off' or Command == 'Close'):
             self.setPosition(Devices[Unit].DeviceID, 0)
-        if (Command == 'On'):
+        if (Command == 'On' or Command == 'Open'):
             self.setPosition(Devices[Unit].DeviceID, 1)
         if (Command == 'Set Level'):
             self.setPosition(Devices[Unit].DeviceID, Level/100)
