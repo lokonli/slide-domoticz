@@ -164,8 +164,10 @@ class iimSlide:
                         for device in Devices:
                             units.remove(device)
                         unit = min(units)
+                        #switchType 21=percentage+stop which has been added September 2021, previous version uses 13 (=percentage)
+                        switchType = 21 if self.nVersion>=1 else 13
                         myDev = Domoticz.Device(Name=slide["device_name"], Unit=unit, DeviceID=str(
-                            slide["id"]), Type=244, Subtype=73, Switchtype=21, Used=1)
+                            slide["id"]), Type=244, Subtype=73, Switchtype=switchType, Used=1)
                         myDev.Create()
                         # in case device is offline then no pos info
                         if "pos" in slide["device_info"]:
