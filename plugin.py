@@ -3,14 +3,14 @@
 # Author: lokonli
 #
 """
-<plugin key="iim-slide" name="Slide by Innovation in Motion" author="lokonli" version="0.1.10" wikilink="https://github.com/lokonli/slide-domoticz" externallink="https://slide.store/">
+<plugin key="iim-slide" name="Slide by Innovation in Motion" author="lokonli" version="1.0.1" wikilink="https://github.com/lokonli/slide-domoticz" externallink="https://slide.store/">
     <description>
         <h2>Slide by Innovation in Motion</h2><br/>
         Plugin for Slide by Innovation in Motion.<br/>
         <br/>
         It uses the Innovation in Motion open API.<br/>
         <br/>
-        This is release 1.0.0. <br/>
+        This is release 1.0.1. <br/>
         <br/>
         <h3>Configuration</h3>
         First you have to register via the Slide app.
@@ -44,6 +44,7 @@ import json
 from datetime import datetime, timezone
 import time
 import _strptime
+import re
 
 
 class iimSlide:
@@ -57,11 +58,21 @@ class iimSlide:
         # 0: Date including timezone info; 1: No timezone info. Workaround for strptime bug
         self._dateType = 0
         self._checkMovement = 0
-
         return
 
     def onStart(self):
         Domoticz.Debug("onStart called")
+        strVersion = Parameters['DomoticzVersion']
+        Domoticz.Log('Version ' + strVersion)
+        x = re.search("(?<=build )\d+(?=\))", strVersion)
+        self.nVersion = 0
+        domoVersion = 0
+        if x:
+            domoVersion = int(x[0])
+        if domoVersion > 14560:
+            self.nVersion = 1
+            Domoticz.Log('New version')
+        Domoticz.Log('Version ' + str(self.nVersion))
         if Parameters["Mode6"] != "0":
             Domoticz.Debugging(int(Parameters["Mode6"]))
             DumpConfigToLog()
@@ -153,8 +164,10 @@ class iimSlide:
                         for device in Devices:
                             units.remove(device)
                         unit = min(units)
+                        #switchType 21=percentage+stop which has been added September 2021, previous version uses 13 (=percentage)
+                        switchType = 21 if self.nVersion>=1 else 13
                         myDev = Domoticz.Device(Name=slide["device_name"], Unit=unit, DeviceID=str(
-                            slide["id"]), Type=244, Subtype=73, Switchtype=13, Used=1)
+                            slide["id"]), Type=244, Subtype=73, Switchtype=switchType, Used=1)
                         myDev.Create()
                         # in case device is offline then no pos info
                         if "pos" in slide["device_info"]:
@@ -199,12 +212,13 @@ class iimSlide:
 
     def setStatus(self, device, pos):
         Domoticz.Debug("setStatus called")
-        sValue = str(int(pos*100))
         nValue = 2
-        if pos < 0.13:
+        nPos = 1- pos if self.nVersion >= 1 else pos
+        sValue = str(int(nPos*100))
+        if nPos < 0.13:
             nValue = 0
             sValue = '0'
-        if pos > 0.87:
+        if nPos > 0.87:
             nValue = 1
             sValue = '100'
         if(device.sValue != sValue):
@@ -212,13 +226,20 @@ class iimSlide:
             return True
         else:
             return False
+# New Domoticz versions
+#- 0 = Blind Close in GUI/dzvents
+#- 100 = Blind Open in GUI/dzvents
+#- 90 = Show 90 in the GUI/dzvents, Send 90 to the device (Blind almost fully Open)
+#- 10 = Show 10 in the GUI/dzvents, Send 10 to the device (Blind almost fully Closed)
+
 
     def onCommand(self, Unit, Command, Level, Hue):
+        Domoticz.Log('Level ' + str(Level) + ' Command ' + Command)
         Domoticz.Debug("onCommand called for Unit " + str(Unit) +
                        ": Parameter '" + str(Command) + "', Level: " + str(Level))
-        if (Command == 'Off' or Command == 'Open'):
+        if (Command == 'Off' or Command == 'Close'):
             self.setPosition(Devices[Unit].DeviceID, 0)
-        if (Command == 'On' or Command == 'Close'):
+        if (Command == 'On' or Command == 'Open'):
             self.setPosition(Devices[Unit].DeviceID, 1)
         if (Command == 'Set Level'):
             self.setPosition(Devices[Unit].DeviceID, Level/100)
@@ -247,9 +268,13 @@ class iimSlide:
 
     def setPosition(self, id, level):
         Domoticz.Debug("setPosition called")
+        Domoticz.Log("Nversion "+ str(self.nVersion))
+        nLevel = 1-level if self.nVersion >= 1 else level
+        Domoticz.Log("nLevel " + str(nLevel))
+
         sendData = {'Verb': 'POST',
                     'URL': '/api/slide/{}/position'.format(id),
-                    'Data': json.dumps({"pos": str(level)})
+                    'Data': json.dumps({"pos": str(nLevel)})
                     }
         self.slideRequest(sendData)
 
