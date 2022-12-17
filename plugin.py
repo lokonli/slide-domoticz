@@ -3,14 +3,14 @@
 # Author: lokonli
 #
 """
-<plugin key="iim-slide" name="Slide by Innovation in Motion" author="lokonli" version="1.0.1" wikilink="https://github.com/lokonli/slide-domoticz" externallink="https://slide.store/">
+<plugin key="iim-slide" name="Slide by Innovation in Motion" author="lokonli" version="1.0.2" wikilink="https://github.com/lokonli/slide-domoticz" externallink="https://slide.store/">
     <description>
         <h2>Slide by Innovation in Motion</h2><br/>
         Plugin for Slide by Innovation in Motion.<br/>
         <br/>
         It uses the Innovation in Motion open API.<br/>
         <br/>
-        This is release 1.0.1. <br/>
+        This is release 1.0.2. <br/>
         <br/>
         <h3>Configuration</h3>
         First you have to register via the Slide app.
@@ -64,12 +64,17 @@ class iimSlide:
         Domoticz.Debug("onStart called")
         strVersion = Parameters['DomoticzVersion']
         Domoticz.Log('Version ' + strVersion)
-        x = re.search("(?<=build )\d+(?=\))", strVersion)
-        self.nVersion = 0
+        reDomoVersion = re.findall("[\d.]+", strVersion)
+        print(reDomoVersion)
+##        Domoticz.Log('domoVersion ' + json.dumps(reDomoVersion))
         domoVersion = 0
-        if x:
-            domoVersion = int(x[0])
-        if domoVersion > 14560:
+        domoBuild = 0
+        if(len(reDomoVersion)>=1):
+            domoVersion = float(reDomoVersion[0])
+        if(len(reDomoVersion)>=2):
+            domoBuild = int(reDomoVersion[1])
+        self.nVersion = 0
+        if domoVersion >= 2022.2 or (domoVersion == 2022.1 and domoBuild > 14560):
             self.nVersion = 1
             Domoticz.Log('New version')
         Domoticz.Log('Version ' + str(self.nVersion))
